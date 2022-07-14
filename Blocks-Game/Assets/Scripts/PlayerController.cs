@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -9,24 +10,24 @@ public class PlayerController : MonoBehaviour
     public float speed;
     private float acceleration;
     public float maxSpeed;
-    public GameObject startPos;
+    private Vector2 velocityStore;
 
-    public GameObject GameWonPanel,PauseScreen;
+    public GameObject GameWonPanel,PauseScreen,GameLostPanel;
 
-    private bool isMovingLeft, isMovingRight, isMovingUp, isMovingDown, isBrakeApplied, instaBreak, isGameWon, isPaused;
+    private bool isMovingLeft, isMovingRight, isMovingUp, isMovingDown, isBrakeApplied, instaBreak, isGameOver, isPaused;
 
     // Start is called before the first frame update
     void Start()
     {
         isMovingDown = isMovingLeft = isMovingRight = isMovingUp = false;
         isBrakeApplied = instaBreak = false;
-        isGameWon = isPaused = false;
+        isGameOver = isPaused = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (isGameWon||isPaused)
+        if (isGameOver || isPaused)
             return;
         if (Input.GetAxis("Cancel") > 0)
         {
@@ -34,6 +35,8 @@ public class PlayerController : MonoBehaviour
             if (isPaused)
             {
                 PauseScreen.SetActive(true);
+                velocityStore = rBD.velocity;
+                rBD.velocity = Vector2.zero;
                 return;
             }
             else
@@ -127,7 +130,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (isGameWon|| isPaused)
+        if (isGameOver|| isPaused)
             return;
         if (instaBreak)
         {
@@ -176,21 +179,28 @@ public class PlayerController : MonoBehaviour
         if (collision.tag == "WinBox")
         {
             GameWonPanel.SetActive(true);
-            isGameWon = true;
+            isGameOver = true;
             Debug.Log("Level Complete!!");
+        }
+        else if (collision.tag == "Enemy")
+        {
+            GameLostPanel.SetActive(true);
+            isGameOver = true;
+            Debug.Log("Level Lost!!");
         }
     }
 
     public void RestartGame()
     {
-        isGameWon = false;
+        isGameOver = false;
         GameWonPanel.SetActive(false);
-        gameObject.transform.position = startPos.transform.position;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void ResumeGame()
     {
         isPaused = false;
         PauseScreen.SetActive(false);
+        rBD.velocity = velocityStore;
     }
 }
